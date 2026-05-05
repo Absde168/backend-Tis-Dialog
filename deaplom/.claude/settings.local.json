@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add *)",
+      "Bash(dotnet script *)",
+      "Bash(dotnet-script)",
+      "Bash(dotnet csi *)",
+      "Bash(powershell -Command ' *)",
+      "Bash(mkdir \"C:\\\\Temp\\\\HashGen\")",
+      "Read(//c/Temp/**)",
+      "Bash(dotnet new *)",
+      "Bash(echo 'using BCrypt.Net; *)",
+      "Bash(mkdir -p /tmp/hashgen)",
+      "Read(//tmp/**)",
+      "Bash(cat)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet build *)",
+      "PowerShell(New-NetFirewallRule -DisplayName \"ASP.NET Backend 5245\" -Direction Inbound -Protocol TCP -LocalPort 5245 -Action Allow -ErrorAction SilentlyContinue)"
+    ]
+  }
+}
