@@ -64,6 +64,21 @@ namespace deaplom.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            // Сид демо-данных для нового пользователя
+            var now = DateTime.UtcNow;
+            _context.PaymentHistory.AddRange(
+                new PaymentHistory { UserId = user.Id, Amount = 500,  PaymentDate = now.AddDays(-45), PaymentMethod = "Карта",  Status = "Success", TransactionId = Guid.NewGuid().ToString() },
+                new PaymentHistory { UserId = user.Id, Amount = 500,  PaymentDate = now.AddDays(-15), PaymentMethod = "СБП",    Status = "Success", TransactionId = Guid.NewGuid().ToString() },
+                new PaymentHistory { UserId = user.Id, Amount = -350, PaymentDate = now.AddDays(-10), PaymentMethod = "Списание", Status = "Success", TransactionId = Guid.NewGuid().ToString() },
+                new PaymentHistory { UserId = user.Id, Amount = 500,  PaymentDate = now.AddDays(-2),  PaymentMethod = "Карта",  Status = "Success", TransactionId = Guid.NewGuid().ToString() }
+            );
+            _context.ConnectionHistory.AddRange(
+                new ConnectionHistory { UserId = user.Id, ConnectedAt = now.AddDays(-30), DisconnectedAt = now.AddDays(-29), DataUsedBytes = 2_147_483_648L },
+                new ConnectionHistory { UserId = user.Id, ConnectedAt = now.AddDays(-20), DisconnectedAt = now.AddDays(-19), DataUsedBytes = 1_073_741_824L },
+                new ConnectionHistory { UserId = user.Id, ConnectedAt = now.AddDays(-5),  DisconnectedAt = now.AddDays(-4),  DataUsedBytes = 536_870_912L  }
+            );
+            await _context.SaveChangesAsync();
+
             var token = GenerateJwt(user);
             return Ok(new { token, userId = user.Id });
         }
