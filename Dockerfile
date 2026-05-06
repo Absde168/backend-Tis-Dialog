@@ -12,7 +12,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# Render использует порт 10000 для Docker-сервисов
 ENV ASPNETCORE_URLS=http://+:10000
+ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 10000
 
 ENTRYPOINT ["dotnet", "deaplom.dll"]
