@@ -7,10 +7,25 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// === Connection String — Render даёт DATABASE_URL, fallback на appsettings ===
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+string connectionString;
+
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    // Render формат: postgres://user:password@host:port/database
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+}
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+}
+
 // === DbContext ===
 builder.Services.AddDbContext<TisDialogContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure()));
+    options.UseNpgsql(connectionString));
 
 // === Services ===
 builder.Services.AddScoped<IBaseService<User>, UserService>();
@@ -59,6 +74,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // === JWT Authentication ===
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? "YourVerySecureSecretKey123!@#Loshnya";
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = "Bearer";
@@ -74,20 +92,31 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = "TisDialog",
         ValidAudience = "MobileApp",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourVerySecureSecretKey123!@#Loshnya"))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
+});
+
+// === CORS — разрешаем всё для мобильного приложения ===
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
 var app = builder.Build();
 
-// === Pipeline ===
-if (app.Environment.IsDevelopment())
+// === Автомиграция при старте ===
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<TisDialogContext>();
+    db.Database.Migrate();
 }
 
+// === Pipeline ===
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

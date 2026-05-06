@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tisdialog-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tisdialog-db
+          property: connectionString
+      - key: JWT_SECRET
+        value: YourVerySecureSecretKey123!@#Loshnya
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+databases:
+  - name: tisdialog-db
+    plan: free
+    databaseName: tisdialog
+    user: tisdialog_user
