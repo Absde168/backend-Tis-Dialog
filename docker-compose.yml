@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    container_name: tisdialog-db
+    restart: always
+    environment:
+      POSTGRES_DB: tisdialog
+      POSTGRES_USER: tisdialog_user
+      POSTGRES_PASSWORD: tisdialog_pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tisdialog_user -d tisdialog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: tisdialog-api
+    restart: always
+    ports:
+      - "80:5000"
+    environment:
+      DATABASE_URL: postgres://tisdialog_user:tisdialog_pass@db:5432/tisdialog
+      JWT_SECRET: YourVerySecureSecretKey123!@#Loshnya
+      ASPNETCORE_ENVIRONMENT: Production
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
